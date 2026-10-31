@@ -204,13 +204,55 @@ if raw_spectra is not None and len(raw_spectra) > 0:
                 cm1.metric("Точность R²", f"{r2:.3f}")
                 cm2.metric("Ошибка RMSEC", f"{rmse:.3f}")
                 
-                fig4, ax4 = plt.subplots(figsize=(6, 5))
-                ax4.scatter(y_clean, y_pred, color='darkgreen', edgecolors='black', alpha=0.7, s=50)
+                                # --- СТАРЫЙ КОД MATPLOTLIB (ЗАМЕНИТЬ) ---
+                # fig4, ax4 = plt.subplots(figsize=(6, 5))
+                # ax4.scatter(y_clean, y_pred, ...)
+                # ...
+                # st.pyplot(fig4)
+                
+                # --- НОВЫЙ ИНТЕРАКТИВНЫЙ КОД PLOTLY ---
+                import plotly.graph_objects as go
+                
+                # Формируем текст для всплывающей подсказки при наведении
+                hover_text = [
+                    f"Индекс: {idx}<br>Лаб. значение: {meas:.3f}<br>Предсказано: {pred:.3f}"
+                    for idx, meas, pred in zip(clean_idx, y_clean, y_pred)
+                ]
+                
+                fig4 = go.Figure()
+                
+                # Добавляем точки образцов
+                fig4.add_trace(go.Scatter(
+                    x=y_clean,
+                    y=y_pred,
+                    mode='markers',
+                    marker=dict(size=10, color='darkgreen', line=dict(width=1, color='black')),
+                    text=hover_text,
+                    hoverinfo='text',
+                    name='Образцы зерна'
+                ))
+                
+                # Добавляем идеальную линию 1:1
                 lims = [min(min(y_clean), min(y_pred)), max(max(y_clean), max(y_pred))]
-                ax4.plot(lims, lims, color='darkgray', linestyle='--')
-                ax4.set_xlabel("Измерено (Лаборатория)")
-                ax4.set_ylabel("Предсказано PLS")
-                st.pyplot(fig4)
+                fig4.add_trace(go.Scatter(
+                    x=lims, y=lims,
+                    mode='lines',
+                    line=dict(color='gray', dash='dash'),
+                    name='Идеальное совпадение'
+                ))
+                
+                # Настройка осей и внешнего вида
+                fig4.update_layout(
+                    title="График калибровки (Интерактивный Plotly)",
+                    xaxis_title="Лабораторное значение (Измерено)",
+                    yaxis_title="Предсказано моделью PLS",
+                    width=700, height=500,
+                    hovermode='closest'
+                )
+                
+                # Выводим интерактивный график в Streamlit
+                st.plotly_chart(fig4, use_container_width=True)
+
 
                 # ЭКСПОРТ .PKL
                 st.write("---")
